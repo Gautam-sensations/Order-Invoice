@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Tracker - Sensationsexhibits</title>
+  <style>
+    :root {
+      --bg-dark: #0a0f1a;
+      --bg-table: #1f2937;
+      --accent: #f97316;
+      --text-light: #d1d5db;
+      --border: #374151;
+      --font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      font-family: var(--font);
+      margin: 0;
+      padding: 40px;
+    }
+    h1 {
+      color: var(--accent);
+      font-size: 32px;
+      margin-bottom: 20px;
+    }
+    input, select, button, textarea {
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      border: 1px solid white;
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: white;
+      outline: none;
+    }
+    button {
+      background-color: var(--accent);
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+      padding: 10px 20px;
+      border-radius: 6px;
+    }
+    button:hover {
+      background-color: #fb923c;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: var(--accent);
+      color: white;
+    }
+    td {
+      background-color: var(--bg-table);
+    }
+    .form-card {
+      background-color: #111827;
+      padding: 20px;
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .preview-img {
+      height: 40px;
+      width: 40px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 40px;
+      color: #aaa;
+    }
+    .actions {
+      text-align: right;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sensationsexhibits - Order Placement</h1>
+  <div class="form-card">
+    <div class="form-grid">
+      <input type="text" id="projectName" placeholder="Project Name">
+      <input type="text" id="warehouseManager" placeholder="Warehouse Manager">
+      <input type="datetime-local" id="projectDate">
+      <input type="text" id="requestedBy" placeholder="Requested By">
+      <input type="text" id="placedBy" placeholder="Placed By">
+      <input type="text" id="paymentMethod" placeholder="Payment Method">
+    </div>
+  </div>
+  <div class="form-card">
+    <div class="form-grid">
+      <input type="text" id="name" placeholder="Item Name">
+      <input type="text" id="sku" placeholder="SKU">
+      <input type="number" id="quantity" placeholder="Quantity">
+      <input type="number" id="price" placeholder="Unit Price">
+      <input type="number" id="netCost" placeholder="Net Price">
+      <input type="text" id="supplier" placeholder="Supplier">
+      <select id="status">
+        <option value="">Select Status</option>
+        <option value="Pending">🔴 Pending</option>
+        <option value="Ordered">🟠 Ordered</option>
+        <option value="Delivered">🟢 Delivered</option>
+      </select>
+      <select id="returnPolicy">
+        <option value="">Return Policy</option>
+        <option value="7 Days">7 Days</option>
+        <option value="30 Days">30 Days</option>
+        <option value="Non-Refundable">Non-Refundable</option>
+      </select>
+      <input type="text" id="notes" placeholder="Notes">
+      <input type="file" id="image">
+      <img id="preview" class="preview-img" src="" alt="" hidden>
+    </div>
+    <div style="text-align: right; margin-top: 16px;">
+      <button id="addItemBtn">Add Item</button>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>SKU</th>
+        <th>Quantity</th>
+        <th>Status</th>
+        <th>Supplier</th>
+        <th>Unit Price</th>
+        <th>Net Price</th>
+        <th>Notes</th>
+        <th>Return</th>
+        <th>Image</th>
+      </tr>
+    </thead>
+    <tbody id="itemsTable"></tbody>
+  </table>
+  <div class="actions">
+    <button onclick="printPage()">Print</button>
+  </div>
+  <p style="margin-top: 40px; font-size: 14px;">Sign (PM/WM): __________________________<br>Initials: ____________</p>
+  <div class="footer">Made by Gautam Aneja in collaboration with Sensationsexhibits</div>
+  <script>
+    let items = [];
+    let currentImage = null;
+    document.getElementById("image").addEventListener("change", function(e) {
+      currentImage = e.target.files[0];
+      const preview = document.getElementById("preview");
+      if (currentImage) {
+        preview.src = URL.createObjectURL(currentImage);
+        preview.hidden = false;
+      } else {
+        preview.hidden = true;
+      }
+    });
+    document.getElementById("addItemBtn").addEventListener("click", addItem);
+    function addItem() {
+      const item = {
+        name: getVal("name"), sku: getVal("sku"), quantity: getVal("quantity"),
+        status: getVal("status"), supplier: getVal("supplier"), price: getVal("price"),
+        netCost: getVal("netCost"), notes: getVal("notes"), returnPolicy: getVal("returnPolicy"),
+        image: currentImage
+      };
+      items.push(item);
+      renderTable();
+      resetForm();
+    }
+    function getVal(id) {
+      return document.getElementById(id).value;
+    }
+    function renderTable() {
+      const tbody = document.getElementById("itemsTable");
+      tbody.innerHTML = "";
+      items.forEach((item, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.name}</td>
+          <td>${item.sku}</td>
+          <td>${item.quantity}</td>
+          <td>${item.status}</td>
+          <td>${item.supplier}</td>
+          <td>${item.price}</td>
+          <td>${item.netCost}</td>
+          <td>${item.notes}</td>
+          <td>${item.returnPolicy}</td>
+          <td>${item.image ? item.image.name : ""}</td>
+        `;
+        if (item.image) {
+          const img = document.createElement("img");
+          img.src = URL.createObjectURL(item.image);
+          img.alt = "Preview";
+          img.style.height = "40px";
+          img.style.width = "40px";
+          img.style.objectFit = "cover";
+          img.style.borderRadius = "4px";
+          const previewCell = tr.children[9];
+          previewCell.innerHTML = "";
+          previewCell.appendChild(img);
+        }
+        tbody.appendChild(tr);
+      });
+    }
+    function resetForm() {
+      ["name", "sku", "quantity", "status", "supplier", "price", "netCost", "notes", "returnPolicy", "image"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el.type === "file") el.value = ""; else el.value = "";
+      });
+      document.getElementById("preview").hidden = true;
+      currentImage = null;
+    }
+    function printPage() {
+      const win = window.open("", "", "width=900,height=700");
+      win.document.write('<html><head><title>Print</title><style>');
+      win.document.write('body { font-family: Arial; padding: 20px; background: #111827; color: #d1d5db; }');
+      win.document.write('table { width: 100%; border-collapse: collapse; }');
+      win.document.write('th, td { border: 1px solid #ccc; padding: 8px; }');
+      win.document.write('th { background: #f97316; color: white; }');
+      win.document.write('td { background: #1f2937; color: #d1d5db; }');
+      win.document.write('</style></head><body>');
+      win.document.write(`<h1><span style='color:#f97316'>Sensationsexhibits</span> - Order Tracker</h1>`);
+      win.document.write(`<p><strong>Project Name:</strong> ${getVal("projectName")}<br>`);
+      win.document.write(`<strong>Warehouse Manager:</strong> ${getVal("warehouseManager")}<br>`);
+      win.document.write(`<strong>Project Date:</strong> ${getVal("projectDate")}<br>`);
+      win.document.write(`<strong>Requested By:</strong> ${getVal("requestedBy")}<br>`);
+      win.document.write(`<strong>Placed By:</strong> ${getVal("placedBy")}<br>`);
+      win.document.write(`<strong>Payment Method:</strong> ${getVal("paymentMethod")}<br>`);
+      win.document.write(`<strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>`);
+      win.document.write('<table><thead><tr><th>Name</th><th>SKU</th><th>Qty</th><th>Status</th><th>Supplier</th><th>Price</th><th>Net</th><th>Notes</th><th>Return</th><th>Image</th></tr></thead><tbody>');
+      items.forEach(item => {
+        const imageURL = item.image ? URL.createObjectURL(item.image) : "";
+        win.document.write(`<tr>
+          <td>${item.name}</td><td>${item.sku}</td><td>${item.quantity}</td><td>${item.status}</td>
+          <td>${item.supplier}</td><td>$${item.price}</td><td>${item.netCost}</td>
+          <td>${item.notes}</td><td>${item.returnPolicy}</td>
+          <td>${imageURL ? `<img src='${imageURL}' width='30' height='30' />` : ""}</td>
+        </tr>`);
+      });
+      win.document.write('</tbody></table>');
+      win.document.write('<p style="margin-top: 40px; font-size: 14px;">Sign (PM/WM): __________________________<br>Initials: ____________</p>');
+      win.document.write('<p style="text-align:center; font-size:10px; color:#aaa">Made by Gautam Aneja in collaboration with Sensationsexhibits</p>');
+      win.document.write('</body></html>');
+      win.document.close();
+      setTimeout(() => win.print(), 500);
+    }
+  </script>
+</body>
+</html>
