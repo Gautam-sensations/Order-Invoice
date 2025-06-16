@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Invoice - Sensationsexhibits</title>
+  <title>OrderInvoice - Sensationsexhibits</title>
   <style>
     :root {
       --bg-dark: #0a0f1a;
@@ -140,19 +140,7 @@
     </div>
   </div>
   <table>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>SKU</th>
-        <th>Quantity</th>
-        <th>Status</th>
-        <th>Supplier</th>
-        <th>Unit Price</th>
-        <th>Net Price</th>
-        <th>Notes</th>
-        <th>Return</th>
-        <th>Image</th>
-      </tr>
+    <thead><tr><th>Name</th><th>SKU</th><th>Quantity</th><th>Status</th><th>Supplier</th><th>Unit Price</th><th>Net Price</th><th>Notes</th><th>Return</th><th>Image</th><th>Actions</th>
     </thead>
     <tbody id="itemsTable"></tbody>
   </table>
@@ -218,6 +206,9 @@
           previewCell.innerHTML = "";
           previewCell.appendChild(img);
         }
+                const actionCell = document.createElement("td");
+        actionCell.innerHTML = `<button onclick="editItem(${i})">✏️</button> <button onclick="deleteItem(${i})">🗑️</button>`;
+        tr.appendChild(actionCell);
         tbody.appendChild(tr);
       });
     }
@@ -238,7 +229,7 @@
       win.document.write('th { background: #f97316; color: white; }');
       win.document.write('td { background: #1f2937; color: #d1d5db; }');
       win.document.write('</style></head><body>');
-      win.document.write(`<h1><span style='color:#f97316'>Sensationsexhibits</span> - Order Invoice</h1>`);
+      win.document.write(`<h1><span style='color:#f97316'>Sensationsexhibits</span> - Order Tracker</h1>`);
       win.document.write(`<p><strong>Project Name:</strong> ${getVal("projectName")}<br>`);
       win.document.write(`<strong>Warehouse Manager:</strong> ${getVal("warehouseManager")}<br>`);
       win.document.write(`<strong>Project Date:</strong> ${getVal("projectDate")}<br>`);
@@ -248,6 +239,7 @@
       win.document.write(`<strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>`);
       win.document.write('<table><thead><tr><th>Name</th><th>SKU</th><th>Qty</th><th>Status</th><th>Supplier</th><th>Price</th><th>Net</th><th>Notes</th><th>Return</th><th>Image</th></tr></thead><tbody>');
       items.forEach(item => {
+        if (isBlank(item)) return;
         const imageURL = item.image ? URL.createObjectURL(item.image) : "";
         win.document.write(`<tr>
           <td>${item.name}</td><td>${item.sku}</td><td>${item.quantity}</td><td>${item.status}</td>
@@ -263,6 +255,30 @@
       win.document.close();
       setTimeout(() => win.print(), 500);
     }
-  </script>
+  function deleteItem(index) {
+  items.splice(index, 1);
+  renderTable();
+}
+
+function editItem(index) {
+  const item = items[index];
+  document.getElementById("name").value = item.name;
+  document.getElementById("sku").value = item.sku;
+  document.getElementById("quantity").value = item.quantity;
+  document.getElementById("status").value = item.status;
+  document.getElementById("supplier").value = item.supplier;
+  document.getElementById("price").value = item.price;
+  document.getElementById("netCost").value = item.netCost;
+  document.getElementById("notes").value = item.notes;
+  document.getElementById("returnPolicy").value = item.returnPolicy;
+  currentImage = item.image;
+  document.getElementById("preview").src = item.image ? URL.createObjectURL(item.image) : "";
+  document.getElementById("preview").hidden = !item.image;
+  deleteItem(index);
+}
+
+// Skip blank entries in print
+const isBlank = obj => !obj.name && !obj.sku;
+</script>
 </body>
 </html>
